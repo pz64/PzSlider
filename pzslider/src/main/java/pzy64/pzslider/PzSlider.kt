@@ -1,4 +1,4 @@
-package customslider.pzy64.customslider.slider
+package pzy64.pzslider
 
 import android.content.Context
 import android.graphics.*
@@ -7,23 +7,28 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 
-class CustomSlider @JvmOverloads constructor(
+class PzSlider @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-
+    private var range = Pair(5, 101)
     private var viewWidth = 0
     private var viewHeight = 0
     private var onSeekListener: OnSeekListener? = null
 
-    private var touchX = 80f
+    private var bend = 40f
     private var barStroke = 5f
-    private var hemiCircleRadius = 50f
-    private var innerCircleRadius = 40f
-    private var bend = 15f
+    private var hemiCircleRadius = 40f
+    private var innerCircleRadius = 32f
+    private var padding = hemiCircleRadius + bend
+    private var touchX = padding
+    private var progress = 5000
+    private var textHeight = 20f
+    private var textSize = 30f
+    private var lineColor = "#ffaf49".toColor()
+    private var circleColor = "#ff8d00".toColor()
+    private var textColor = "#f47100".toColor()
 
-    private var lineColor = "#424242".toColor()
-    private var circleColor = "#212121".toColor()
 
     private var linePaint: Paint = Paint().apply {
         color = lineColor
@@ -39,6 +44,13 @@ class CustomSlider @JvmOverloads constructor(
     private var backgroundPaint = Paint().apply {
         color = Color.WHITE
         strokeWidth = barStroke + 5
+        isAntiAlias = true
+    }
+
+    private var textPaint = Paint().apply {
+        color = textColor
+        textSize = this@PzSlider.textSize
+        textAlign = Paint.Align.CENTER
         isAntiAlias = true
     }
 
@@ -88,20 +100,24 @@ class CustomSlider @JvmOverloads constructor(
             top = viewHeight / 2f - bend
         }
 
-
         canvas.drawLine(0f, viewHeight / 2f, oval.left - bend / 2, viewHeight / 2f, linePaint)
         canvas.drawLine(oval.right + bend / 2, viewHeight / 2f, viewWidth.toFloat(), viewHeight / 2f, linePaint)
 
-
         val path = Path()
-        path.addArc(bendLeft, 90f, -90f)
-        path.arcTo(oval, 200f, 140f)
-        path.arcTo(bendRight, 180f, -90f)
-
-
+        path.addArc(bendLeft, 90f, -bend)
+        path.arcTo(oval, 180 + bend, 180 - 2 * bend)
+        path.arcTo(bendRight, 90 + bend, -bend)
         canvas.drawPath(path, linePaint)
 
         canvas.drawCircle(touchX, viewHeight / 2f, innerCircleRadius, paint)
+
+        progress = mapRange(
+            Pair(padding.toInt(), (viewWidth - padding).toInt()),
+            range,
+            touchX.toInt()
+        )
+
+        canvas.drawText("₹ ${progress}K", touchX, viewHeight / 2 - hemiCircleRadius - textHeight, textPaint)
     }
 
     fun setOnSeekListener(listener: OnSeekListener) {
@@ -112,15 +128,24 @@ class CustomSlider @JvmOverloads constructor(
         event?.let {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    Log.d("YYY", "down")
+                    if (onSeekListener != null) {
+                        onSeekListener!!.onProgressStarted(this,progress*1000)
+                    }
                 }
                 MotionEvent.ACTION_UP -> {
-                    Log.d("YYY", "up")
+                    if (onSeekListener != null) {
+                        onSeekListener!!.onProgressCompleted(this,progress*1000)
+                    }
                 }
 
                 MotionEvent.ACTION_MOVE -> {
-                    touchX = event.x
+                    if (event.x > padding && event.x < viewWidth - padding)
+                        touchX = event.x
+                    if (onSeekListener != null) {
+                        onSeekListener!!.onProgressChanged(this,progress*1000)
+                    }
                     invalidate()
+
                 }
                 else -> {
                 }
@@ -142,4 +167,15 @@ class CustomSlider @JvmOverloads constructor(
      * */
     fun String.toColor() = Color.parseColor(this)
 
+    /**
+     * Range mapping function
+     */
+
+    fun mapRange(domain: Pair<Int, Int>, range: Pair<Int, Int>, value: Int): Int {
+        val result =
+            range.first + ((value - domain.first) * (range.second - range.first)) /
+                    (domain.second - domain.first)
+        return result
+
+    }
 }

@@ -2,9 +2,9 @@ package customslider.pzy64.customslider
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-import customslider.pzy64.customslider.slider.CustomSlider
-import customslider.pzy64.customslider.slider.OnSeekListener
 import kotlinx.android.synthetic.main.activity_main.*
+import pzy64.pzslider.OnSeekListener
+import pzy64.pzslider.PzSlider
 
 class MainActivity : AppCompatActivity() {
 
@@ -12,9 +12,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        slider.setOnSeekListener(object : OnSeekListener{
-            override fun onProgressChanged(slider: CustomSlider, progress: Int) {
-
+        slider.setOnSeekListener(object : OnSeekListener {
+            override fun onProgressStarted(slider: PzSlider, progress: Int) {
+                b.text = progress.toString()
+            }
+            override   fun onProgressChanged(slider: PzSlider, progress: Int) {
+                a.text =progress.toString()
+            }
+            override fun onProgressCompleted(slider: PzSlider, progress: Int) {
+                c.text = progress.toString()
             }
         })
     }
