@@ -7,6 +7,7 @@
     tools:context=".MainActivity">
 
     <pzy64.pzslider.PzSlider
+        app:knobAccelerationFactor="4"
         app:textColor="@color/colorPrimary"
         app:lineColor="@color/colorPrimary"
         app:circleColor="@color/colorPrimary"

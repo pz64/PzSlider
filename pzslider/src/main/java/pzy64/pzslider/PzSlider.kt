@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import kotlin.math.abs
 
 class PzSlider @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -16,18 +17,20 @@ class PzSlider @JvmOverloads constructor(
     private var viewHeight = 0
     private var onSeekListener: OnSeekListener? = null
 
-    private var bend :Float
-    private var barStroke :Float
-    private var semiCircleRadius :Float
-    private var innerCircleRadius :Float
-    private var padding :Float
-    private var touchX :Float
-    private var progress :Int
-    private var textHeight :Float
-    private var textSize  :Float
-    private var lineColor  :Int
-    private var circleColor:Int
-    private var textColor :Int
+    private var bend: Float
+    private var barStroke: Float
+    private var semiCircleRadius: Float
+    private var innerCircleRadius: Float
+    private var padding: Float
+    private var touchX: Float
+    private var knobPosition: Float
+    private var progress: Int
+    private var textHeight: Float
+    private var textSize: Float
+    private var lineColor: Int
+    private var circleColor: Int
+    private var textColor: Int
+    private var knobAccelerationFactor: Float
 
     private var linePaint: Paint
     private var paint: Paint
@@ -45,16 +48,19 @@ class PzSlider @JvmOverloads constructor(
         textColor = typedArray.getColor(R.styleable.PzSlider_textColor, "#f47100".toColor())
         circleColor = typedArray.getColor(R.styleable.PzSlider_circleColor, "#ff8d00".toColor())
         lineColor = typedArray.getColor(R.styleable.PzSlider_lineColor, "#ffaf49".toColor())
+        knobAccelerationFactor = typedArray.getFloat(R.styleable.PzSlider_knobAccelerationFactor, 3f)
 
         range = Pair(
-            typedArray.getInteger(R.styleable.PzSlider_rangeStart, 5000)/1000,
-            typedArray.getInteger(R.styleable.PzSlider_rangeEnd, 101000)/1000
+            typedArray.getInteger(R.styleable.PzSlider_rangeStart, 5000) / 1000,
+            typedArray.getInteger(R.styleable.PzSlider_rangeEnd, 101000) / 1000
         )
         typedArray.recycle()
 
         padding = semiCircleRadius + bend
         touchX = padding
         progress = 5000
+
+        knobPosition = touchX
 
         linePaint = Paint().apply {
             color = lineColor
@@ -97,16 +103,37 @@ class PzSlider @JvmOverloads constructor(
 
             drawShape(canvas)
 
+            animateKnob()
+
             canvas.restore()
         }
     }
 
+    private fun animateKnob() {
+        if (touchX != knobPosition) {
+            if (touchX > knobPosition) {
+                val acceleration = (touchX - knobPosition) / knobAccelerationFactor
+                knobPosition += if (acceleration < 1) 1f else acceleration
+            }
+           else if (touchX < knobPosition) {
+                val acceleration = (knobPosition - touchX) / knobAccelerationFactor
+                knobPosition -= if (acceleration < 1) 1f else acceleration
+            }
+            if (abs((touchX - knobPosition)) < 1f)
+                knobPosition = touchX
+            invalidate()
+        } else {
+            if (onSeekListener != null) {
+                onSeekListener!!.onProgressCompleted(this, progress * 1000)
+            }
+        }
+    }
 
     private fun drawShape(canvas: Canvas) {
 
         val oval = RectF().apply {
-            left = touchX - semiCircleRadius
-            right = touchX + semiCircleRadius
+            left = knobPosition - semiCircleRadius
+            right = knobPosition + semiCircleRadius
             top = viewHeight / 2 - semiCircleRadius
             bottom = viewHeight.toFloat() / 2 + semiCircleRadius + 2
         }
@@ -135,15 +162,19 @@ class PzSlider @JvmOverloads constructor(
         path.arcTo(bendRight, 90 + bend, -bend)
         canvas.drawPath(path, linePaint)
 
-        canvas.drawCircle(touchX, viewHeight / 2f, innerCircleRadius, paint)
+        canvas.drawCircle(knobPosition, viewHeight / 2f, innerCircleRadius, paint)
 
         progress = mapRange(
             Pair(padding.toInt(), (viewWidth - padding).toInt()),
             range,
-            touchX.toInt()
+            knobPosition.toInt()
         )
 
-        canvas.drawText("₹ ${progress}K", touchX, viewHeight / 2 - semiCircleRadius - textHeight, textPaint)
+        canvas.drawText("₹ ${progress}K", knobPosition, viewHeight / 2 - semiCircleRadius - textHeight, textPaint)
+
+        if (onSeekListener != null) {
+            onSeekListener!!.onProgressChanged(this, progress * 1000)
+        }
     }
 
     fun setOnSeekListener(listener: OnSeekListener) {
@@ -160,18 +191,12 @@ class PzSlider @JvmOverloads constructor(
                     invalidate()
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (onSeekListener != null) {
-                        onSeekListener!!.onProgressCompleted(this, progress * 1000)
-                    }
                     invalidate()
                 }
 
                 MotionEvent.ACTION_MOVE -> {
                     if (event.x > padding && event.x < viewWidth - padding)
                         touchX = event.x
-                    if (onSeekListener != null) {
-                        onSeekListener!!.onProgressChanged(this, progress * 1000)
-                    }
                     invalidate()
                 }
                 else -> {
