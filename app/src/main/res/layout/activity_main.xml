@@ -7,6 +7,9 @@
     tools:context=".MainActivity">
 
     <pzy64.pzslider.PzSlider
+        app:textColor="@color/colorPrimary"
+        app:lineColor="@color/colorPrimary"
+        app:circleColor="@color/colorPrimary"
         android:id="@+id/slider"
         android:layout_width="match_parent"
         android:layout_height="200dp" />

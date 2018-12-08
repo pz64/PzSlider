@@ -11,47 +11,73 @@ class PzSlider @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
-    private var range = Pair(5, 101)
+    private var range: Pair<Int, Int>
     private var viewWidth = 0
     private var viewHeight = 0
     private var onSeekListener: OnSeekListener? = null
 
-    private var bend = 40f
-    private var barStroke = 5f
-    private var hemiCircleRadius = 40f
-    private var innerCircleRadius = 32f
-    private var padding = hemiCircleRadius + bend
-    private var touchX = padding
-    private var progress = 5000
-    private var textHeight = 20f
-    private var textSize = 30f
-    private var lineColor = "#ffaf49".toColor()
-    private var circleColor = "#ff8d00".toColor()
-    private var textColor = "#f47100".toColor()
+    private var bend :Float
+    private var barStroke :Float
+    private var semiCircleRadius :Float
+    private var innerCircleRadius :Float
+    private var padding :Float
+    private var touchX :Float
+    private var progress :Int
+    private var textHeight :Float
+    private var textSize  :Float
+    private var lineColor  :Int
+    private var circleColor:Int
+    private var textColor :Int
 
+    private var linePaint: Paint
+    private var paint: Paint
+    private var backgroundPaint = Paint()
+    private var textPaint = Paint()
 
-    private var linePaint: Paint = Paint().apply {
-        color = lineColor
-        strokeWidth = barStroke
-        style = Paint.Style.STROKE
-        isAntiAlias = true
-    }
-    private var paint: Paint = Paint().apply {
-        color = circleColor
-        isAntiAlias = true
-    }
+    init {
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.PzSlider)
+        bend = typedArray.getFloat(R.styleable.PzSlider_bend, 40f)
+        barStroke = typedArray.getFloat(R.styleable.PzSlider_barStrokeAmount, 2f)
+        semiCircleRadius = typedArray.getFloat(R.styleable.PzSlider_semiCircleRadius, 40f)
+        innerCircleRadius = typedArray.getFloat(R.styleable.PzSlider_innerCircleRadius, 32f)
+        textHeight = typedArray.getFloat(R.styleable.PzSlider_textHeight, 20f)
+        textSize = typedArray.getFloat(R.styleable.PzSlider_textSize, 30f)
+        textColor = typedArray.getColor(R.styleable.PzSlider_textColor, "#f47100".toColor())
+        circleColor = typedArray.getColor(R.styleable.PzSlider_circleColor, "#ff8d00".toColor())
+        lineColor = typedArray.getColor(R.styleable.PzSlider_lineColor, "#ffaf49".toColor())
 
-    private var backgroundPaint = Paint().apply {
-        color = Color.WHITE
-        strokeWidth = barStroke + 5
-        isAntiAlias = true
-    }
+        range = Pair(
+            typedArray.getInteger(R.styleable.PzSlider_rangeStart, 5000)/1000,
+            typedArray.getInteger(R.styleable.PzSlider_rangeEnd, 101000)/1000
+        )
+        typedArray.recycle()
 
-    private var textPaint = Paint().apply {
-        color = textColor
-        textSize = this@PzSlider.textSize
-        textAlign = Paint.Align.CENTER
-        isAntiAlias = true
+        padding = semiCircleRadius + bend
+        touchX = padding
+        progress = 5000
+
+        linePaint = Paint().apply {
+            color = lineColor
+            strokeWidth = barStroke
+            style = Paint.Style.STROKE
+            isAntiAlias = true
+        }
+        paint = Paint().apply {
+            color = circleColor
+            isAntiAlias = true
+        }
+        backgroundPaint = Paint().apply {
+            color = Color.WHITE
+            strokeWidth = barStroke + 5
+            isAntiAlias = true
+        }
+        textPaint = Paint().apply {
+            color = textColor
+            textSize = this@PzSlider.textSize
+            textAlign = Paint.Align.CENTER
+            isAntiAlias = true
+        }
+
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -76,13 +102,13 @@ class PzSlider @JvmOverloads constructor(
     }
 
 
-    fun drawShape(canvas: Canvas) {
+    private fun drawShape(canvas: Canvas) {
 
         val oval = RectF().apply {
-            left = touchX - hemiCircleRadius
-            right = touchX + hemiCircleRadius
-            top = viewHeight / 2 - hemiCircleRadius
-            bottom = viewHeight.toFloat() / 2 + hemiCircleRadius + 2
+            left = touchX - semiCircleRadius
+            right = touchX + semiCircleRadius
+            top = viewHeight / 2 - semiCircleRadius
+            bottom = viewHeight.toFloat() / 2 + semiCircleRadius + 2
         }
 
 
@@ -117,7 +143,7 @@ class PzSlider @JvmOverloads constructor(
             touchX.toInt()
         )
 
-        canvas.drawText("₹ ${progress}K", touchX, viewHeight / 2 - hemiCircleRadius - textHeight, textPaint)
+        canvas.drawText("₹ ${progress}K", touchX, viewHeight / 2 - semiCircleRadius - textHeight, textPaint)
     }
 
     fun setOnSeekListener(listener: OnSeekListener) {
@@ -129,23 +155,24 @@ class PzSlider @JvmOverloads constructor(
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     if (onSeekListener != null) {
-                        onSeekListener!!.onProgressStarted(this,progress*1000)
+                        onSeekListener!!.onProgressStarted(this, progress * 1000)
                     }
+                    invalidate()
                 }
                 MotionEvent.ACTION_UP -> {
                     if (onSeekListener != null) {
-                        onSeekListener!!.onProgressCompleted(this,progress*1000)
+                        onSeekListener!!.onProgressCompleted(this, progress * 1000)
                     }
+                    invalidate()
                 }
 
                 MotionEvent.ACTION_MOVE -> {
                     if (event.x > padding && event.x < viewWidth - padding)
                         touchX = event.x
                     if (onSeekListener != null) {
-                        onSeekListener!!.onProgressChanged(this,progress*1000)
+                        onSeekListener!!.onProgressChanged(this, progress * 1000)
                     }
                     invalidate()
-
                 }
                 else -> {
                 }
