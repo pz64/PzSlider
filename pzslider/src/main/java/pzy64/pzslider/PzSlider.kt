@@ -48,7 +48,7 @@ class PzSlider @JvmOverloads constructor(
         innerCircleRadius = typedArray.getFloat(R.styleable.PzSlider_innerCircleRadius, 32f)
         textHeight = typedArray.getFloat(R.styleable.PzSlider_textHeight, 20f)
         textSize = typedArray.getFloat(R.styleable.PzSlider_textSize, 30f)
-        padding = typedArray.getFloat(R.styleable.PzSlider_padding,  semiCircleRadius + bend)
+        padding = typedArray.getFloat(R.styleable.PzSlider_horizontalPadding,  semiCircleRadius + bend)
 
         textColor = typedArray.getColor(R.styleable.PzSlider_textColor, "#f47100".toColor())
         circleColor = typedArray.getColor(R.styleable.PzSlider_circleColor, "#ff8d00".toColor())
