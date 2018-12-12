@@ -27,9 +27,12 @@ class PzSlider @JvmOverloads constructor(
     private var progress: Int
     private var textHeight: Float
     private var textSize: Float
+
     private var lineColor: Int
     private var circleColor: Int
     private var textColor: Int
+    private var bgColor: Int
+
     private var knobAccelerationFactor: Float
 
     private var linePaint: Paint
@@ -45,9 +48,13 @@ class PzSlider @JvmOverloads constructor(
         innerCircleRadius = typedArray.getFloat(R.styleable.PzSlider_innerCircleRadius, 32f)
         textHeight = typedArray.getFloat(R.styleable.PzSlider_textHeight, 20f)
         textSize = typedArray.getFloat(R.styleable.PzSlider_textSize, 30f)
+        padding = typedArray.getFloat(R.styleable.PzSlider_padding,  semiCircleRadius + bend)
+
         textColor = typedArray.getColor(R.styleable.PzSlider_textColor, "#f47100".toColor())
         circleColor = typedArray.getColor(R.styleable.PzSlider_circleColor, "#ff8d00".toColor())
         lineColor = typedArray.getColor(R.styleable.PzSlider_lineColor, "#ffaf49".toColor())
+        bgColor = typedArray.getColor(R.styleable.PzSlider_backgroundColor, "#fafafa".toColor())
+
         knobAccelerationFactor = typedArray.getFloat(R.styleable.PzSlider_knobAccelerationFactor, 3f)
 
         range = Pair(
@@ -56,7 +63,6 @@ class PzSlider @JvmOverloads constructor(
         )
         typedArray.recycle()
 
-        padding = semiCircleRadius + bend
         touchX = padding
         progress = 5000
 
@@ -73,7 +79,7 @@ class PzSlider @JvmOverloads constructor(
             isAntiAlias = true
         }
         backgroundPaint = Paint().apply {
-            color = Color.WHITE
+            color = bgColor
             strokeWidth = barStroke + 5
             isAntiAlias = true
         }
@@ -114,8 +120,7 @@ class PzSlider @JvmOverloads constructor(
             if (touchX > knobPosition) {
                 val acceleration = (touchX - knobPosition) / knobAccelerationFactor
                 knobPosition += if (acceleration < 1) 1f else acceleration
-            }
-           else if (touchX < knobPosition) {
+            } else if (touchX < knobPosition) {
                 val acceleration = (knobPosition - touchX) / knobAccelerationFactor
                 knobPosition -= if (acceleration < 1) 1f else acceleration
             }
