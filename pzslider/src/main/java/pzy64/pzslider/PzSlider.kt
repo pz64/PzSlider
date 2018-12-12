@@ -235,4 +235,6 @@ class PzSlider @JvmOverloads constructor(
         return result
 
     }
+
+    fun getProgress() = progress * 1000
 }
